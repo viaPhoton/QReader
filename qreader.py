@@ -24,13 +24,12 @@ _SHARPEN_KERNEL = np.array(((-1., -1., -1.), (-1., 9., -1.), (-1., -1., -1.)), d
 DEFAULT_REENCODINGS = ('shift-jis', 'big5') if os.name == 'nt' else ('big5', 'shift-jis')
 
 class QReader:
-    def __init__(self, model_type: str = 'onnx', min_confidence: float = 0.5,
+    def __init__(self, model_input: str = 'onnx', min_confidence: float = 0.5,
                  reencode_to: str | tuple[str] | list[str] | None = DEFAULT_REENCODINGS):
         """
         This class implements a robust, ML Based QR detector & decoder.
 
-        :param model_size: str. The size of the model to use. It can be 'n' (nano), 's' (small), 'm' (medium) or
-                                'l' (large). Larger models are more accurate but slower. Default (and recommended): 's'.
+        :param model_input: str. Passed on to the qrdet Library
         :param  min_confidence: float. The minimum confidence of the QR detection to be considered valid. Values closer to 0.0 can get more
                 False Positives, while values closer to 1.0 can lose difficult QRs. Default (and recommended): 0.5.
         :param reencode_to: str or None. The encoding to reencode the decoded QR code. If None, it will do just a one-step
@@ -40,7 +39,7 @@ class QReader:
             - 'shift-jis' for Germanic languages
             - 'cp65001' for Asian languages (Thanks to @nguyen-viet-hung for the suggestion)
         """
-        self.detector = QRDetector(model_type=model_type, conf_th=min_confidence)
+        self.detector = QRDetector(model_input=model_input, conf_th=min_confidence)
 
         if isinstance(reencode_to, str):
             self.reencode_to = (reencode_to,) if reencode_to != 'utf-8' else ()
@@ -130,7 +129,11 @@ class QReader:
 
         """
         detections = self.detect(image=image, is_bgr=is_bgr)
-        decoded_qrs = tuple(self.decode(image=image, detection_result=detection) for detection in detections)
+        decoded_qrs = tuple(
+            self.decode(image=image, detection_result=detection) 
+            for detection in detections 
+            if detection['cls'] == 1
+        )
 
 
         if return_detections:

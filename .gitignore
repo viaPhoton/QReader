@@ -6,3 +6,4 @@ qreader.egg-info/
 __pycache__/
 testset/
 venv/
+runs/*
